@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block titulo %}LATENTE Finanzas — Inicio{% endblock %}
+
+{% block contenido %}
+
+  <section class="hero">
+    <span class="chip">Rama Finanzas · Laboratorio LATENTE</span>
+    <h1>Conoce el estado financiero de tu negocio, sin usar Excel</h1>
+    <p>
+      Responde preguntas simples desde tu celular y recibe automáticamente tus costos,
+      tu precio ideal, tu flujo de caja y si puedes asumir un crédito — con alertas
+      claras y recomendaciones que puedes aplicar hoy.
+    </p>
+    <div class="botones-fila">
+      <a href="{{ url_for('diagnostico') }}" class="btn btn-primario">Comenzar diagnóstico</a>
+      <a href="{{ url_for('cargar_ejemplo') }}" class="btn btn-secundario" style="background:rgba(255,255,255,0.1); color:#fff; border-color:rgba(255,255,255,0.3);">
+        Ver un ejemplo cargado
+      </a>
+    </div>
+  </section>
+
+  <div class="tarjeta">
+    <h2>¿Qué vas a lograr con esta herramienta?</h2>
+    <p>
+      No necesitas saber de finanzas ni manejar hojas de cálculo. Tú escribes los
+      datos de tu negocio como los conoces día a día, y la herramienta hace las
+      cuentas por ti.
+    </p>
+  </div>
+
+  <h2 style="margin-top:24px;">El recorrido tiene 5 pasos</h2>
+  <div class="pasos-mini">
+    <div class="paso-mini">
+      <span class="numero">1</span>
+      <div>
+        <h3>Diagnóstico financiero</h3>
+        <p>Cuéntanos sobre tu negocio: qué vendes, cuánto y a qué precio.</p>
+      </div>
+    </div>
+    <div class="paso-mini">
+      <span class="numero">2</span>
+      <div>
+        <h3>Costos y precios</h3>
+        <p>Registra materia prima, mano de obra y gastos para saber tu costo real.</p>
+      </div>
+    </div>
+    <div class="paso-mini">
+      <span class="numero">3</span>
+      <div>
+        <h3>Flujo de caja y presupuesto</h3>
+        <p>Compara lo que entra y lo que sale de tu negocio cada mes.</p>
+      </div>
+    </div>
+    <div class="paso-mini">
+      <span class="numero">4</span>
+      <div>
+        <h3>Financiamiento</h3>
+        <p>Simula un crédito antes de pedirlo y revisa si tu negocio lo soporta.</p>
+      </div>
+    </div>
+    <div class="paso-mini">
+      <span class="numero">5</span>
+      <div>
+        <h3>Dashboard y recomendaciones</h3>
+        <p>Recibe un tablero visual con alertas y acciones concretas para mejorar.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tarjeta texto-centro">
+    <h3>¿Ya diligenciaste tus datos antes?</h3>
+    <p>Continúa donde ibas o empieza de nuevo si quieres borrar todo.</p>
+    <div class="botones-fila" style="justify-content:center;">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-secundario">Ir al Dashboard</a>
+      <a href="{{ url_for('reiniciar') }}" class="btn btn-fantasma">Borrar datos y reiniciar</a>
+    </div>
+  </div>
+
+{% endblock %}

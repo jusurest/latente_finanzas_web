@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block titulo %}Dashboard — LATENTE Finanzas{% endblock %}
+
+{% block contenido %}
+
+  <div class="etiqueta-seccion">Resultado final</div>
+  <h1>Dashboard de {{ negocio.get('nombre_negocio', 'tu negocio') }}</h1>
+  <p>Producto analizado: <strong>{{ negocio.get('producto', '-') }}</strong> · {{ negocio.get('ciudad', '') }}</p>
+
+  <!-- ================= DIAGNÓSTICO GENERAL ================= -->
+  <div class="alerta nivel-{{ costos_precios.nivel }}">
+    <span class="punto"></span>
+    <span>{{ costos_precios.diagnostico }}</span>
+  </div>
+  {% if flujo_caja.nivel != 'ok' %}
+  <div class="alerta nivel-{{ flujo_caja.nivel }}">
+    <span class="punto"></span>
+    <span>{{ flujo_caja.alerta }}</span>
+  </div>
+  {% endif %}
+  {% if financiamiento.monto > 0 %}
+  <div class="alerta nivel-{{ financiamiento.nivel }}">
+    <span class="punto"></span>
+    <span>{{ financiamiento.diagnostico }}</span>
+  </div>
+  {% endif %}
+
+  <!-- ================= COSTOS Y PRECIOS ================= -->
+  <h2 style="margin-top:22px;">Costos y precio</h2>
+  <div class="grilla-indicadores">
+    <div class="indicador">
+      <div class="etiqueta">Costo unitario total</div>
+      <div class="valor">${{ costos_precios.costo_total_unitario | moneda }}</div>
+    </div>
+    <div class="indicador">
+      <div class="etiqueta">Precio actual</div>
+      <div class="valor">${{ costos_precios.precio_actual | moneda }}</div>
+    </div>
+    <div class="indicador acento-naranja">
+      <div class="etiqueta">Precio sugerido</div>
+      <div class="valor">${{ costos_precios.precio_sugerido | moneda }}</div>
+    </div>
+    <div class="indicador">
+      <div class="etiqueta">Margen actual</div>
+      <div class="valor">{{ costos_precios.margen_actual | porcentaje }}</div>
+    </div>
+    <div class="indicador">
+      <div class="etiqueta">Margen deseado</div>
+      <div class="valor">{{ costos_precios.margen_deseado | porcentaje }}</div>
+    </div>
+    <div class="indicador acento-verde">
+      <div class="etiqueta">Utilidad mensual estimada</div>
+      <div class="valor">${{ costos_precios.utilidad_mensual | moneda }}</div>
+    </div>
+  </div>
+
+  <div class="tarjeta plana" style="padding:14px 18px;">
+    <h3 class="mt-0">¿De qué está compuesto tu costo?</h3>
+    <table class="tabla-simple">
+      <tr><td>Materia prima</td><td>${{ costos_precios.costo_mp_unitario | moneda }}</td></tr>
+      <tr><td>Mano de obra</td><td>${{ costos_precios.costo_mo_unitario | moneda }}</td></tr>
+      <tr><td>Costos indirectos</td><td>${{ costos_precios.costo_ci_unitario | moneda }}</td></tr>
+      <tr><td>Costos operativos</td><td>${{ costos_precios.costo_co_unitario | moneda }}</td></tr>
+    </table>
+  </div>
+
+  <!-- ================= PUNTO DE EQUILIBRIO ================= -->
+  <h2 style="margin-top:22px;">Punto de equilibrio</h2>
+  {% if punto_equilibrio.aplica %}
+  <div class="nota-concepto">
+    Es cuántas unidades necesitas vender al mes solo para cubrir tus costos fijos,
+    sin ganar ni perder todavía.
+  </div>
+  <div class="grilla-indicadores">
+    <div class="indicador">
+      <div class="etiqueta">Unidades para no perder</div>
+      <div class="valor">{{ "%.0f"|format(punto_equilibrio.unidades) }}</div>
+    </div>
+    <div class="indicador">
+      <div class="etiqueta">Ventas de equilibrio</div>
+      <div class="valor">${{ punto_equilibrio.valor_ventas | moneda }}</div>
+    </div>
+    <div class="indicador {{ 'acento-verde' if costos_precios.unidades_mes >= punto_equilibrio.unidades else 'acento-rojo' }}">
+      <div class="etiqueta">Estás vendiendo</div>
+      <div class="valor">{{ "%.0f"|format(costos_precios.unidades_mes) }} und/mes</div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alerta nivel-alerta">
+    <span class="punto"></span>
+    <span>No se puede calcular el punto de equilibrio: tu precio actual no alcanza a cubrir el costo variable por unidad. Corrige eso primero.</span>
+  </div>
+  {% endif %}
+
+  <!-- ================= ESTADO DE RESULTADOS ================= -->
+  <h2 style="margin-top:22px;">Estado de resultados (mensual, simplificado)</h2>
+  <div class="nota-concepto">
+    Calculado con tu precio actual y unidades vendidas al mes. No reemplaza un
+    estado financiero certificado por un contador, pero te da una lectura rápida.
+  </div>
+  <div class="tarjeta plana" style="padding:14px 18px;">
+    <table class="tabla-simple">
+      <tr><td>Ventas totales</td><td class="numero">${{ estado_resultados.ventas_totales | moneda }}</td></tr>
+      <tr class="fila-resta"><td>(–) Costo variable total</td><td class="numero">${{ estado_resultados.costo_variable_total | moneda }}</td></tr>
+      <tr class="fila-total"><td>= Utilidad bruta</td><td class="numero">${{ estado_resultados.utilidad_bruta | moneda }} ({{ estado_resultados.margen_bruto | porcentaje }})</td></tr>
+      <tr class="fila-resta"><td>(–) Gastos fijos del mes</td><td class="numero">${{ estado_resultados.gastos_fijos_mensuales | moneda }}</td></tr>
+      <tr class="fila-total"><td>= Utilidad operacional</td><td class="numero">${{ estado_resultados.utilidad_operacional | moneda }}</td></tr>
+      <tr class="fila-resta"><td>(–) Gasto financiero estimado</td><td class="numero">${{ estado_resultados.gasto_financiero | moneda }}</td></tr>
+      <tr class="fila-resta"><td>(–) Impuestos aproximados</td><td class="numero">${{ estado_resultados.impuestos | moneda }}</td></tr>
+      <tr class="fila-total"><td>= Utilidad neta estimada</td><td class="numero">${{ estado_resultados.utilidad_neta | moneda }} ({{ estado_resultados.margen_neto | porcentaje }})</td></tr>
+    </table>
+  </div>
+
+  <!-- ================= FLUJO DE CAJA ================= -->
+  <h2 style="margin-top:22px;">Flujo de caja</h2>
+  <div class="grilla-indicadores">
+    <div class="indicador">
+      <div class="etiqueta">Total ingresos</div>
+      <div class="valor">${{ flujo_caja.total_ingresos | moneda }}</div>
+    </div>
+    <div class="indicador">
+      <div class="etiqueta">Total egresos</div>
+      <div class="valor">${{ flujo_caja.total_egresos | moneda }}</div>
+    </div>
+    <div class="indicador {{ 'acento-rojo' if flujo_caja.flujo_neto < 0 else 'acento-verde' }}">
+      <div class="etiqueta">Flujo de caja mensual</div>
+      <div class="valor">${{ flujo_caja.flujo_neto | moneda }}</div>
+    </div>
+    <div class="indicador {{ 'acento-rojo' if flujo_caja.saldo_final < 0 else '' }}">
+      <div class="etiqueta">Saldo final estimado</div>
+      <div class="valor">${{ flujo_caja.saldo_final | moneda }}</div>
+    </div>
+  </div>
+
+  <div class="tarjeta plana" style="padding:14px 18px;">
+    <h3 class="mt-0">Proyección de caja a 12 meses</h3>
+    <p class="texto-chico mb-0" style="margin-bottom:10px;">
+      Repite tu flujo neto mensual actual para ver cómo se acumula la caja.
+      {% if proyeccion.meses_negativos > 0 %}
+        <strong style="color:var(--rojo);">{{ proyeccion.meses_negativos }} de 12 meses quedarían con caja negativa</strong> si nada cambia.
+      {% else %}
+        Los 12 meses proyectados se mantienen con caja positiva.
+      {% endif %}
+    </p>
+    <div class="tabla-scroll">
+      <table class="tabla-simple">
+        <tr>
+          <th>Mes</th>
+          {% for fila in proyeccion.filas %}<th class="numero">{{ fila.mes }}</th>{% endfor %}
+        </tr>
+        <tr>
+          <td>Saldo proyectado</td>
+          {% for fila in proyeccion.filas %}
+          <td class="numero {{ 'mes-negativo' if fila.saldo < 0 }}">${{ fila.saldo | moneda }}</td>
+          {% endfor %}
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================= FINANCIAMIENTO ================= -->
+  <h2 style="margin-top:22px;">Financiamiento</h2>
+  {% if financiamiento.monto > 0 %}
+  <div class="grilla-indicadores">
+    <div class="indicador">
+      <div class="etiqueta">Cuota mensual estimada</div>
+      <div class="valor">${{ financiamiento.cuota_mensual | moneda }}</div>
+    </div>
+    <div class="indicador">
+      <div class="etiqueta">Total pagado</div>
+      <div class="valor">${{ financiamiento.total_pagado | moneda }}</div>
+    </div>
+    <div class="indicador">
+      <div class="etiqueta">Total intereses</div>
+      <div class="valor">${{ financiamiento.total_intereses | moneda }}</div>
+    </div>
+    <div class="indicador {{ 'acento-verde' if financiamiento.cobertura > 1.5 else ('acento-rojo' if financiamiento.cobertura < 1 else '') }}">
+      <div class="etiqueta">Cobertura de la cuota</div>
+      <div class="valor">{{ "%.2f"|format(financiamiento.cobertura) }}x</div>
+    </div>
+  </div>
+  {% else %}
+  <div class="tarjeta plana" style="padding:14px 18px;">
+    <p class="mb-0">No simulaste ningún crédito todavía. Puedes hacerlo en el paso de Financiamiento.</p>
+  </div>
+  {% endif %}
+
+  <div class="botones-fila" style="margin-top:22px;">
+    <button type="button" class="btn btn-secundario no-imprimir" data-imprimir>Imprimir o guardar como PDF</button>
+    <a href="{{ url_for('recomendaciones') }}" class="btn btn-primario">Ver recomendaciones</a>
+  </div>
+
+  <div class="botones-fila no-imprimir">
+    <a href="{{ url_for('diagnostico') }}" class="btn btn-fantasma">Editar mis datos</a>
+    <a href="{{ url_for('reiniciar') }}" class="btn btn-fantasma">Borrar todo y reiniciar</a>
+  </div>
+
+{% endblock %}

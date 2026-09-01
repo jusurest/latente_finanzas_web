@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block titulo %}Flujo de caja — LATENTE Finanzas{% endblock %}
+
+{% block contenido %}
+
+  <div class="etiqueta-seccion">Paso 3 de 5</div>
+  <h1>¿Te alcanza el dinero cada mes?</h1>
+  <p>Además de vender, importa cuándo entra y cuándo sale el dinero de tu negocio.</p>
+  <div class="progreso-pasos">
+    <span class="paso completo"></span><span class="paso completo"></span><span class="paso completo"></span><span class="paso"></span><span class="paso"></span>
+  </div>
+
+  {% if errores %}
+  <div class="lista-errores">
+    Revisa lo siguiente antes de continuar:
+    <ul>
+      {% for error in errores %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="post" class="tarjeta">
+    <h2>Ingresos</h2>
+    <div class="grilla-2">
+      <div class="campo">
+        <label for="ingresos_mensuales">Ingresos mensuales esperados</label>
+        <input type="number" step="any" min="0" id="ingresos_mensuales" name="ingresos_mensuales"
+               placeholder="Ej: 2500000" value="{{ datos.get('ingresos_mensuales', '') }}">
+      </div>
+      <div class="campo">
+        <label for="otros_ingresos">Otros ingresos</label>
+        <input type="number" step="any" min="0" id="otros_ingresos" name="otros_ingresos"
+               placeholder="Ej: 0" value="{{ datos.get('otros_ingresos', '') }}">
+      </div>
+    </div>
+
+    <h2 style="margin-top:8px;">Egresos</h2>
+    <div class="grilla-2">
+      <div class="campo">
+        <label for="gastos_fijos">Gastos fijos</label>
+        <input type="number" step="any" min="0" id="gastos_fijos" name="gastos_fijos"
+               placeholder="Ej: 1280000" value="{{ datos.get('gastos_fijos', '') }}">
+      </div>
+      <div class="campo">
+        <label for="gastos_variables">Gastos variables</label>
+        <input type="number" step="any" min="0" id="gastos_variables" name="gastos_variables"
+               placeholder="Ej: 300000" value="{{ datos.get('gastos_variables', '') }}">
+      </div>
+    </div>
+    <div class="grilla-2">
+      <div class="campo">
+        <label for="pago_deudas">Pago de deudas</label>
+        <input type="number" step="any" min="0" id="pago_deudas" name="pago_deudas"
+               placeholder="Ej: 0" value="{{ datos.get('pago_deudas', '') }}">
+      </div>
+      <div class="campo">
+        <label for="impuestos">Impuestos aproximados</label>
+        <input type="number" step="any" min="0" id="impuestos" name="impuestos"
+               placeholder="Ej: 50000" value="{{ datos.get('impuestos', '') }}">
+      </div>
+    </div>
+    <div class="campo">
+      <label for="inversiones">Inversiones o mejoras</label>
+      <input type="number" step="any" min="0" id="inversiones" name="inversiones"
+             placeholder="Ej: 0" value="{{ datos.get('inversiones', '') }}">
+    </div>
+
+    <div class="nota-concepto">
+      La caja inicial es el dinero que tienes disponible hoy, antes de que entren o salgan
+      los movimientos de este mes.
+    </div>
+
+    <div class="campo mb-0">
+      <label for="caja_inicial">Caja inicial</label>
+      <input type="number" step="any" min="0" id="caja_inicial" name="caja_inicial"
+             placeholder="Ej: 1000000" value="{{ datos.get('caja_inicial', '') }}">
+    </div>
+
+    <div class="botones-fila">
+      <a href="{{ url_for('costos') }}" class="btn btn-secundario">Atrás</a>
+      <button type="submit" class="btn btn-primario btn-ancho">Continuar a Financiamiento</button>
+    </div>
+  </form>
+
+{% endblock %}

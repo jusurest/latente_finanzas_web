@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block titulo %}Costos y precios — LATENTE Finanzas{% endblock %}
+
+{% block contenido %}
+
+  <div class="etiqueta-seccion">Paso 2 de 5</div>
+  <h1>Cuéntanos qué te cuesta producir</h1>
+  <p>Agrega los insumos, el personal y los gastos de tu negocio para <strong>{{ negocio.get('producto', 'tu producto') }}</strong>. Puedes agregar cuantas filas necesites.</p>
+  <div class="progreso-pasos">
+    <span class="paso completo"></span><span class="paso completo"></span><span class="paso"></span><span class="paso"></span><span class="paso"></span>
+  </div>
+
+  {% if errores %}
+  <div class="lista-errores">
+    Revisa lo siguiente antes de continuar:
+    <ul>
+      {% for error in errores %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="post">
+
+    <!-- ================= MATERIA PRIMA ================= -->
+    <div class="tarjeta">
+      <h2>1. Materia prima</h2>
+      <div class="nota-concepto">
+        Todo lo que lleva directamente tu producto: pan, carne, queso, tela, insumos, materiales.
+      </div>
+
+      <div data-repetible="mp">
+        {% set filas_mp = materia_prima if materia_prima else [{}] %}
+        {% for fila in filas_mp %}
+        <div class="bloque-repetible">
+          <div class="fila-titulo">
+            <span>Insumo #{{ loop.index }}</span>
+            <button type="button" class="btn-quitar">Quitar</button>
+          </div>
+          <div class="campo">
+            <label>Nombre del insumo</label>
+            <input type="text" name="mp_nombre[]" placeholder="Ej: Carne" value="{{ fila.get('nombre', '') }}">
+          </div>
+          <div class="grilla-2">
+            <div class="campo">
+              <label>Costo de compra</label>
+              <input type="number" step="any" min="0" name="mp_costo_compra[]" placeholder="Ej: 45000" value="{{ fila.get('costo_compra', '') }}">
+            </div>
+            <div class="campo">
+              <label>Cantidad que trae la compra</label>
+              <input type="number" step="any" min="0" name="mp_cantidad_compra[]" placeholder="Ej: 1000" value="{{ fila.get('cantidad_compra', '') }}">
+            </div>
+          </div>
+          <div class="campo mb-0">
+            <label>Cantidad usada por unidad vendida</label>
+            <input type="number" step="any" min="0" name="mp_cantidad_usada[]" placeholder="Ej: 150" value="{{ fila.get('cantidad_usada', '') }}">
+            <span class="ayuda">Usa la misma unidad en los tres campos (ej: gramos, mililitros, unidades).</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" class="btn-agregar" data-agregar="mp">+ Agregar otro insumo</button>
+    </div>
+
+    <!-- ================= MANO DE OBRA ================= -->
+    <div class="tarjeta">
+      <h2>2. Mano de obra</h2>
+      <div class="nota-concepto">
+        El trabajo de las personas del negocio también cuesta: cocinero, auxiliar, vendedor, diseñador, tú mismo.
+      </div>
+
+      <div data-repetible="mo">
+        {% set filas_mo = mano_obra if mano_obra else [{}] %}
+        {% for fila in filas_mo %}
+        <div class="bloque-repetible">
+          <div class="fila-titulo">
+            <span>Rol o persona #{{ loop.index }}</span>
+            <button type="button" class="btn-quitar">Quitar</button>
+          </div>
+          <div class="campo">
+            <label>Rol o persona</label>
+            <input type="text" name="mo_nombre[]" placeholder="Ej: Cocinero" value="{{ fila.get('nombre', '') }}">
+          </div>
+          <div class="grilla-2">
+            <div class="campo">
+              <label>Pago mensual</label>
+              <input type="number" step="any" min="0" name="mo_pago_mensual[]" placeholder="Ej: 1300000" value="{{ fila.get('pago_mensual', '') }}">
+            </div>
+            <div class="campo">
+              <label>Horas trabajadas al mes</label>
+              <input type="number" step="any" min="0" name="mo_horas_mes[]" placeholder="Ej: 160" value="{{ fila.get('horas_mes', '') }}">
+            </div>
+          </div>
+          <div class="campo mb-0">
+            <label>Minutos dedicados por unidad</label>
+            <input type="number" step="any" min="0" name="mo_minutos_unidad[]" placeholder="Ej: 6" value="{{ fila.get('minutos_unidad', '') }}">
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" class="btn-agregar" data-agregar="mo">+ Agregar otro rol</button>
+    </div>
+
+    <!-- ================= COSTOS INDIRECTOS ================= -->
+    <div class="tarjeta">
+      <h2>3. Costos indirectos</h2>
+      <div class="nota-concepto">
+        Gastos generales para operar, aunque no se vean dentro del producto: arriendo, servicios, internet, contabilidad.
+      </div>
+
+      <div data-repetible="ci">
+        {% set filas_ci = costos_indirectos if costos_indirectos else [{}] %}
+        {% for fila in filas_ci %}
+        <div class="bloque-repetible">
+          <div class="fila-titulo">
+            <span>Gasto #{{ loop.index }}</span>
+            <button type="button" class="btn-quitar">Quitar</button>
+          </div>
+          <div class="campo">
+            <label>Concepto</label>
+            <input type="text" name="ci_concepto[]" placeholder="Ej: Arriendo" value="{{ fila.get('concepto', '') }}">
+          </div>
+          <div class="grilla-2">
+            <div class="campo">
+              <label>Valor mensual</label>
+              <input type="number" step="any" min="0" name="ci_valor_mensual[]" placeholder="Ej: 800000" value="{{ fila.get('valor_mensual', '') }}">
+            </div>
+            <div class="campo">
+              <label>% asignado a este producto</label>
+              <input type="number" step="any" min="0" max="100" name="ci_porcentaje_asignado[]" placeholder="Ej: 100" value="{{ fila.get('porcentaje_asignado', '') }}">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" class="btn-agregar" data-agregar="ci">+ Agregar otro gasto</button>
+    </div>
+
+    <!-- ================= COSTOS OPERATIVOS ================= -->
+    <div class="tarjeta">
+      <h2>4. Costos operativos</h2>
+      <div class="nota-concepto">
+        Costos para entregar o vender cada unidad: empaques, servilletas, domicilio, comisión de pasarela o de plataforma.
+      </div>
+
+      <div data-repetible="co">
+        {% set filas_co = costos_operativos if costos_operativos else [{}] %}
+        {% for fila in filas_co %}
+        <div class="bloque-repetible">
+          <div class="fila-titulo">
+            <span>Costo #{{ loop.index }}</span>
+            <button type="button" class="btn-quitar">Quitar</button>
+          </div>
+          <div class="campo">
+            <label>Concepto</label>
+            <input type="text" name="co_concepto[]" placeholder="Ej: Empaque" value="{{ fila.get('concepto', '') }}">
+          </div>
+          <div class="grilla-2">
+            <div class="campo">
+              <label>Costo fijo por unidad</label>
+              <input type="number" step="any" min="0" name="co_costo_fijo_unidad[]" placeholder="Ej: 1200" value="{{ fila.get('costo_fijo_unidad', '') }}">
+            </div>
+            <div class="campo">
+              <label>% sobre la venta</label>
+              <input type="number" step="any" min="0" max="100" name="co_porcentaje_venta[]" placeholder="Ej: 3" value="{{ fila.get('porcentaje_venta', '') }}">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" class="btn-agregar" data-agregar="co">+ Agregar otro costo</button>
+    </div>
+
+    <div class="botones-fila">
+      <a href="{{ url_for('diagnostico') }}" class="btn btn-secundario">Atrás</a>
+      <button type="submit" class="btn btn-primario btn-ancho">Continuar a Flujo de caja</button>
+    </div>
+  </form>
+
+  <!-- ============ PLANTILLAS PARA FILAS NUEVAS (JavaScript) ============ -->
+  <template data-plantilla="mp">
+    <div class="bloque-repetible">
+      <div class="fila-titulo">
+        <span>Insumo #</span>
+        <button type="button" class="btn-quitar">Quitar</button>
+      </div>
+      <div class="campo">
+        <label>Nombre del insumo</label>
+        <input type="text" name="mp_nombre[]" placeholder="Ej: Carne">
+      </div>
+      <div class="grilla-2">
+        <div class="campo">
+          <label>Costo de compra</label>
+          <input type="number" step="any" min="0" name="mp_costo_compra[]" placeholder="Ej: 45000">
+        </div>
+        <div class="campo">
+          <label>Cantidad que trae la compra</label>
+          <input type="number" step="any" min="0" name="mp_cantidad_compra[]" placeholder="Ej: 1000">
+        </div>
+      </div>
+      <div class="campo mb-0">
+        <label>Cantidad usada por unidad vendida</label>
+        <input type="number" step="any" min="0" name="mp_cantidad_usada[]" placeholder="Ej: 150">
+      </div>
+    </div>
+  </template>
+
+  <template data-plantilla="mo">
+    <div class="bloque-repetible">
+      <div class="fila-titulo">
+        <span>Rol o persona #</span>
+        <button type="button" class="btn-quitar">Quitar</button>
+      </div>
+      <div class="campo">
+        <label>Rol o persona</label>
+        <input type="text" name="mo_nombre[]" placeholder="Ej: Cocinero">
+      </div>
+      <div class="grilla-2">
+        <div class="campo">
+          <label>Pago mensual</label>
+          <input type="number" step="any" min="0" name="mo_pago_mensual[]" placeholder="Ej: 1300000">
+        </div>
+        <div class="campo">
+          <label>Horas trabajadas al mes</label>
+          <input type="number" step="any" min="0" name="mo_horas_mes[]" placeholder="Ej: 160">
+        </div>
+      </div>
+      <div class="campo mb-0">
+        <label>Minutos dedicados por unidad</label>
+        <input type="number" step="any" min="0" name="mo_minutos_unidad[]" placeholder="Ej: 6">
+      </div>
+    </div>
+  </template>
+
+  <template data-plantilla="ci">
+    <div class="bloque-repetible">
+      <div class="fila-titulo">
+        <span>Gasto #</span>
+        <button type="button" class="btn-quitar">Quitar</button>
+      </div>
+      <div class="campo">
+        <label>Concepto</label>
+        <input type="text" name="ci_concepto[]" placeholder="Ej: Arriendo">
+      </div>
+      <div class="grilla-2">
+        <div class="campo">
+          <label>Valor mensual</label>
+          <input type="number" step="any" min="0" name="ci_valor_mensual[]" placeholder="Ej: 800000">
+        </div>
+        <div class="campo">
+          <label>% asignado a este producto</label>
+          <input type="number" step="any" min="0" max="100" name="ci_porcentaje_asignado[]" placeholder="Ej: 100">
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template data-plantilla="co">
+    <div class="bloque-repetible">
+      <div class="fila-titulo">
+        <span>Costo #</span>
+        <button type="button" class="btn-quitar">Quitar</button>
+      </div>
+      <div class="campo">
+        <label>Concepto</label>
+        <input type="text" name="co_concepto[]" placeholder="Ej: Empaque">
+      </div>
+      <div class="grilla-2">
+        <div class="campo">
+          <label>Costo fijo por unidad</label>
+          <input type="number" step="any" min="0" name="co_costo_fijo_unidad[]" placeholder="Ej: 1200">
+        </div>
+        <div class="campo">
+          <label>% sobre la venta</label>
+          <input type="number" step="any" min="0" max="100" name="co_porcentaje_venta[]" placeholder="Ej: 3">
+        </div>
+      </div>
+    </div>
+  </template>
+
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block titulo %}Financiamiento — LATENTE Finanzas{% endblock %}
+
+{% block contenido %}
+
+  <div class="etiqueta-seccion">Paso 4 de 5</div>
+  <h1>¿Puedes tomar un crédito?</h1>
+  <p>Simula un crédito antes de pedirlo. Si no piensas tomar uno ahora, deja el monto en 0 y continúa.</p>
+  <div class="progreso-pasos">
+    <span class="paso completo"></span><span class="paso completo"></span><span class="paso completo"></span><span class="paso completo"></span><span class="paso"></span>
+  </div>
+
+  {% if errores %}
+  <div class="lista-errores">
+    Revisa lo siguiente antes de continuar:
+    <ul>
+      {% for error in errores %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="post" class="tarjeta">
+    <h2>Datos del crédito</h2>
+
+    <div class="campo">
+      <label for="monto">Monto del crédito</label>
+      <input type="number" step="any" min="0" id="monto" name="monto"
+             placeholder="Ej: 5000000" value="{{ datos.get('monto', '') }}">
+    </div>
+
+    <div class="grilla-2">
+      <div class="campo">
+        <label for="tasa_anual">Tasa anual (%)</label>
+        <input type="number" step="any" min="0" id="tasa_anual" name="tasa_anual"
+               placeholder="Ej: 25" value="{{ datos.get('tasa_anual', '') }}">
+      </div>
+      <div class="campo">
+        <label for="plazo_meses">Plazo en meses</label>
+        <input type="number" step="1" min="0" id="plazo_meses" name="plazo_meses"
+               placeholder="Ej: 24" value="{{ datos.get('plazo_meses', '') }}">
+      </div>
+    </div>
+
+    <div class="nota-concepto">
+      La pregunta clave: ¿tu utilidad mensual alcanza para pagar la cuota sin dejar
+      la caja de tu negocio en negativo? Lo verás en el Dashboard.
+    </div>
+
+    <div class="botones-fila">
+      <a href="{{ url_for('flujo_caja') }}" class="btn btn-secundario">Atrás</a>
+      <button type="submit" class="btn btn-primario btn-ancho">Ver mi Dashboard</button>
+    </div>
+  </form>
+
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}Recomendaciones — LATENTE Finanzas{% endblock %}
+
+{% block contenido %}
+
+  <div class="etiqueta-seccion">Acciones sugeridas</div>
+  <h1>Qué hacer con estos resultados</h1>
+  <p>
+    Estas recomendaciones se generan automáticamente según los datos que ingresaste.
+    No reemplazan una asesoría contable o financiera profesional.
+  </p>
+
+  {% for recomendacion in recomendaciones %}
+  <div class="tarjeta" style="display:flex; gap:12px; align-items:flex-start;">
+    <span class="numero" style="width:28px;height:28px;border-radius:8px;background:var(--gris-fondo);color:var(--azul-oscuro);font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.85rem;">{{ loop.index }}</span>
+    <p class="mb-0">{{ recomendacion }}</p>
+  </div>
+  {% endfor %}
+
+  <div class="tarjeta plana">
+    <h3 class="mt-0">Checklist antes de decidir</h3>
+    <table class="tabla-simple">
+      <tr><td>¿El precio actual cubre el costo total unitario?</td><td>{{ "Sí" if costos_precios.precio_actual >= costos_precios.costo_total_unitario else "No" }}</td></tr>
+      <tr><td>¿El margen actual alcanza el margen deseado?</td><td>{{ "Sí" if costos_precios.margen_actual >= costos_precios.margen_deseado else "No" }}</td></tr>
+      <tr><td>¿El flujo de caja queda positivo?</td><td>{{ "Sí" if flujo_caja.saldo_final >= 0 else "No" }}</td></tr>
+      <tr><td>¿La cuota del crédito es sostenible?</td><td>
+        {% if financiamiento.monto == 0 %}No aplica{% elif financiamiento.cobertura >= 1 %}Sí{% else %}No{% endif %}
+      </td></tr>
+    </table>
+  </div>
+
+  <div class="botones-fila">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secundario">Volver al Dashboard</a>
+    <button type="button" class="btn btn-primario no-imprimir" data-imprimir>Imprimir o guardar como PDF</button>
+  </div>
+
+  <div class="botones-fila no-imprimir">
+    <a href="{{ url_for('reiniciar') }}" class="btn btn-fantasma">Empezar un nuevo diagnóstico</a>
+  </div>
+
+{% endblock %}
