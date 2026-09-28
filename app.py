@@ -441,68 +441,151 @@ def _latente_sena_get(obj, *keys, default=0):
 
 
 def _latente_sena_calc():
+    """
+    Usa la misma función central que alimenta el Dashboard principal.
+    En esta app la función real se llama calcular_todo().
+    """
     try:
-        if "calculate_all" in globals():
-            return calculate_all()
-    except Exception:
-        pass
-    try:
-        from calculations import calculate_all as _calc
-        try:
-            return _calc()
-        except TypeError:
-            try:
-                return _calc(session)
-            except Exception:
-                return {}
+        if "calcular_todo" in globals():
+            resultado = calcular_todo()
+            return resultado or {}
     except Exception:
         return {}
+    return {}
 
 
-def _latente_sena_session_value(*keys, default=0):
-    try:
-        for source_key in ["business", "datos_negocio", "diagnostico", "cash_flow", "financing"]:
-            source = session.get(source_key, {})
-            if isinstance(source, dict):
-                for key in keys:
-                    if key in source:
-                        return source.get(key, default)
-    except Exception:
-        pass
+def _latente_sena_pick(dic, *keys, default=0):
+    if not isinstance(dic, dict):
+        return default
+    for key in keys:
+        if key in dic and dic.get(key) not in [None, ""]:
+            return dic.get(key)
     return default
+
+
+def _latente_sena_normalize_margin(value):
+    n = _latente_sena_float(value)
+    if n > 1:
+        return n / 100.0
+    return n
 
 
 def _latente_sena_build_indicators():
     calc = _latente_sena_calc()
 
-    units = _latente_sena_float(_latente_sena_get(calc, "units_per_month", default=_latente_sena_session_value("units_per_month", "unidades_mes")))
-    price = _latente_sena_float(_latente_sena_get(calc, "current_price", default=_latente_sena_session_value("current_price", "precio_actual")))
-    sales = _latente_sena_float(_latente_sena_get(calc, "total_income", default=units * price))
-    expenses = _latente_sena_float(_latente_sena_get(calc, "total_expenses", default=0))
-    utility = _latente_sena_float(_latente_sena_get(calc, "monthly_profit", default=sales - expenses))
-    margin = _latente_sena_float(_latente_sena_get(calc, "current_margin", default=(utility / sales if sales else 0)))
-    net_cash = _latente_sena_float(_latente_sena_get(calc, "net_cash_flow", default=utility))
-    ending_cash = _latente_sena_float(_latente_sena_get(calc, "ending_cash", default=net_cash))
-    payment = _latente_sena_float(_latente_sena_get(calc, "monthly_payment", default=_latente_sena_session_value("monthly_payment", "cuota_mensual")))
-    coverage = _latente_sena_float(_latente_sena_get(calc, "payment_coverage", default=(utility / payment if payment else 0)))
-    loan = _latente_sena_float(_latente_sena_get(calc, "loan_amount", default=_latente_sena_session_value("loan_amount", "monto_credito")))
-    variable_unit = (
-        _latente_sena_float(_latente_sena_get(calc, "mp_unit_total", default=0))
-        + _latente_sena_float(_latente_sena_get(calc, "labor_unit_total", default=0))
-        + _latente_sena_float(_latente_sena_get(calc, "operational_unit_total", default=0))
-    )
-    fixed_monthly = _latente_sena_float(_latente_sena_get(calc, "indirect_monthly", default=0))
-    contribution = price - variable_unit
-    breakeven = fixed_monthly / contribution if contribution > 0 else 0
+    negocio = calc.get("negocio") or session.get("negocio", {}) or {}
+    costos_precios = calc.get("costos_precios") or {}
+    flujo = calc.get("flujo_caja") or {}
+    financiamiento = calc.get("financiamiento") or {}
+    punto_equilibrio = calc.get("punto_equilibrio") or {}
+    estado_resultados = calc.get("estado_resultados") or {}
 
-    labor_details = _latente_sena_get(calc, "labor_details", default=[])
+    materia_prima = calc.get("materia_prima") or {}
+    mano_obra = calc.get("mano_obra") or {}
+    costos_indirectos = calc.get("costos_indirectos") or {}
+    costos_operativos = calc.get("costos_operativos") or {}
+
+    units = _latente_sena_float(_latente_sena_pick(
+        negocio, "unidades_mes", "unidades_mensuales", "cantidad_mensual", default=0
+    ))
+    price = _latente_sena_float(_latente_sena_pick(
+        negocio, "precio_actual", "precio_venta", default=0
+    ))
+
+    sales = _latente_sena_float(_latente_sena_pick(
+        costos_precios,
+        "ventas_mensuales", "ingresos_mensuales", "ingreso_mensual", "total_ventas", "ventas_totales",
+        default=units * price
+    ))
+
+    if sales <= 0:
+        sales = units * price
+
+    expenses = _latente_sena_float(_latente_sena_pick(
+        estado_resultados,
+        "costos_y_gastos", "total_costos_gastos", "total_gastos", "egresos_totales",
+        default=0
+    ))
+
+    if expenses <= 0:
+        expenses = _latente_sena_float(_latente_sena_pick(
+            flujo,
+            "total_salidas", "salidas_totales", "egresos", "total_egresos",
+            default=0
+        ))
+
+    utility = _latente_sena_float(_latente_sena_pick(
+        costos_precios,
+        "utilidad_mensual", "ganancia_mensual", "utilidad_total_mensual",
+        default=0
+    ))
+
+    if utility == 0:
+        utility = _latente_sena_float(_latente_sena_pick(
+            estado_resultados,
+            "utilidad_neta", "utilidad_operativa", "resultado_neto",
+            default=sales - expenses
+        ))
+
+    margin = _latente_sena_normalize_margin(_latente_sena_pick(
+        costos_precios,
+        "margen_actual", "margen_real", "margen_utilidad_actual",
+        default=(utility / sales if sales else 0)
+    ))
+
+    net_cash = _latente_sena_float(_latente_sena_pick(
+        flujo,
+        "flujo_neto", "flujo_caja_neto", "saldo_neto", "resultado_caja",
+        default=utility
+    ))
+
+    ending_cash = _latente_sena_float(_latente_sena_pick(
+        flujo,
+        "saldo_final", "caja_final", "saldo_final_caja",
+        default=net_cash
+    ))
+
+    payment = _latente_sena_float(_latente_sena_pick(
+        financiamiento,
+        "cuota_mensual", "pago_mensual", "cuota",
+        default=0
+    ))
+
+    coverage = _latente_sena_float(_latente_sena_pick(
+        financiamiento,
+        "cobertura_cuota", "cobertura", "capacidad_pago",
+        default=(utility / payment if payment else 0)
+    ))
+
+    loan = _latente_sena_float(_latente_sena_pick(
+        financiamiento,
+        "monto_credito", "monto", "loan_amount", "valor_credito",
+        default=0
+    ))
+
+    breakeven = _latente_sena_float(_latente_sena_pick(
+        punto_equilibrio,
+        "unidades_equilibrio", "punto_equilibrio_unidades", "unidades", "punto_equilibrio",
+        default=0
+    ))
+
+    # Si el punto de equilibrio no vino calculado, intentamos calcularlo con los componentes reales.
+    if breakeven <= 0:
+        variable_unit = (
+            _latente_sena_float(_latente_sena_pick(materia_prima, "total_unitario", default=0))
+            + _latente_sena_float(_latente_sena_pick(mano_obra, "total_unitario", default=0))
+            + _latente_sena_float(_latente_sena_pick(costos_operativos, "total_unitario", default=0))
+        )
+        fixed_monthly = _latente_sena_float(_latente_sena_pick(
+            costos_indirectos, "total_asignado_mensual", "total_mensual", default=0
+        ))
+        contribution = price - variable_unit
+        breakeven = fixed_monthly / contribution if contribution > 0 else 0
+
     try:
-        jobs = len([x for x in labor_details if x])
+        jobs = len(session.get("mano_obra", []))
     except Exception:
-        try:
-            jobs = len(session.get("labor", []))
-        except Exception:
-            jobs = 0
+        jobs = 0
 
     def status_money_positive(value):
         if value > 0:
@@ -517,16 +600,76 @@ def _latente_sena_build_indicators():
     utility_status = status_money_positive(utility)
 
     indicators = [
-        {"name": "Ventas mensuales proyectadas", "value": _latente_sena_money(sales), "status": "info" if sales > 0 else "warn", "reading": "Reportado" if sales > 0 else "Falta dato", "relevance": "Ayuda a sustentar la proyección de ventas del plan de negocio."},
-        {"name": "Costos y gastos mensuales", "value": _latente_sena_money(expenses), "status": "info" if expenses > 0 else "warn", "reading": "Reportado" if expenses > 0 else "Falta dato", "relevance": "Permite explicar la estructura de costos y gastos de la iniciativa."},
-        {"name": "Utilidad mensual estimada", "value": _latente_sena_money(utility), "status": utility_status[0], "reading": utility_status[1], "relevance": "Aporta a la lectura de viabilidad económica y financiera."},
-        {"name": "Margen actual", "value": _latente_sena_percent(margin), "status": margin_status[0], "reading": margin_status[1], "relevance": "Muestra si el precio permite cubrir costos y generar excedente."},
-        {"name": "Flujo de caja neto", "value": _latente_sena_money(net_cash), "status": cash_status[0], "reading": cash_status[1], "relevance": "Sirve para revisar sostenibilidad operativa y capacidad de pago."},
-        {"name": "Saldo final de caja", "value": _latente_sena_money(ending_cash), "status": "good" if ending_cash > 0 else "warn" if ending_cash == 0 else "bad", "reading": "Con caja" if ending_cash > 0 else "Sin margen" if ending_cash == 0 else "Caja negativa", "relevance": "Ayuda a anticipar si el negocio tendrá liquidez después de operar."},
-        {"name": "Punto de equilibrio estimado", "value": (_latente_sena_number(breakeven, 0) + " unidades") if breakeven > 0 else "No calculable", "status": "info" if breakeven > 0 else "warn", "reading": "Calculado" if breakeven > 0 else "Faltan datos", "relevance": "Indica cuántas unidades debería vender para cubrir costos."},
-        {"name": "Inversión o crédito solicitado", "value": _latente_sena_money(loan), "status": "info" if loan > 0 else "warn", "reading": "Reportado" if loan > 0 else "No indicado", "relevance": "Se relaciona con el valor del proyecto y posibles necesidades de financiación."},
-        {"name": "Cobertura de cuota", "value": "Sin crédito" if payment <= 0 else (_latente_sena_number(coverage, 2) + " veces"), "status": coverage_status[0], "reading": coverage_status[1], "relevance": "Permite revisar si la utilidad estimada alcanza para cubrir una deuda."},
-        {"name": "Roles / empleos directos registrados", "value": str(jobs), "status": "info" if jobs > 0 else "warn", "reading": "Reportado" if jobs > 0 else "No indicado", "relevance": "Fondo Emprender revisa generación de autoempleos, puestos de trabajo o empleos directos."},
+        {
+            "name": "Ventas mensuales proyectadas",
+            "value": _latente_sena_money(sales),
+            "status": "info" if sales > 0 else "warn",
+            "reading": "Reportado" if sales > 0 else "Falta dato",
+            "relevance": "Ayuda a sustentar la proyección de ventas del plan de negocio."
+        },
+        {
+            "name": "Costos y gastos mensuales",
+            "value": _latente_sena_money(expenses),
+            "status": "info" if expenses > 0 else "warn",
+            "reading": "Reportado" if expenses > 0 else "Falta dato",
+            "relevance": "Permite explicar la estructura de costos y gastos de la iniciativa."
+        },
+        {
+            "name": "Utilidad mensual estimada",
+            "value": _latente_sena_money(utility),
+            "status": utility_status[0],
+            "reading": utility_status[1],
+            "relevance": "Aporta a la lectura de viabilidad económica y financiera."
+        },
+        {
+            "name": "Margen actual",
+            "value": _latente_sena_percent(margin),
+            "status": margin_status[0],
+            "reading": margin_status[1],
+            "relevance": "Muestra si el precio permite cubrir costos y generar excedente."
+        },
+        {
+            "name": "Flujo de caja neto",
+            "value": _latente_sena_money(net_cash),
+            "status": cash_status[0],
+            "reading": cash_status[1],
+            "relevance": "Sirve para revisar sostenibilidad operativa y capacidad de pago."
+        },
+        {
+            "name": "Saldo final de caja",
+            "value": _latente_sena_money(ending_cash),
+            "status": "good" if ending_cash > 0 else "warn" if ending_cash == 0 else "bad",
+            "reading": "Con caja" if ending_cash > 0 else "Sin margen" if ending_cash == 0 else "Caja negativa",
+            "relevance": "Ayuda a anticipar si el negocio tendrá liquidez después de operar."
+        },
+        {
+            "name": "Punto de equilibrio estimado",
+            "value": (_latente_sena_number(breakeven, 0) + " unidades") if breakeven > 0 else "No calculable",
+            "status": "info" if breakeven > 0 else "warn",
+            "reading": "Calculado" if breakeven > 0 else "Faltan datos",
+            "relevance": "Indica cuántas unidades debería vender para cubrir costos."
+        },
+        {
+            "name": "Inversión o crédito solicitado",
+            "value": _latente_sena_money(loan),
+            "status": "info" if loan > 0 else "warn",
+            "reading": "Reportado" if loan > 0 else "No indicado",
+            "relevance": "Se relaciona con el valor del proyecto y posibles necesidades de financiación."
+        },
+        {
+            "name": "Cobertura de cuota",
+            "value": "Sin crédito" if payment <= 0 else (_latente_sena_number(coverage, 2) + " veces"),
+            "status": coverage_status[0],
+            "reading": coverage_status[1],
+            "relevance": "Permite revisar si la utilidad estimada alcanza para cubrir una deuda."
+        },
+        {
+            "name": "Roles / empleos directos registrados",
+            "value": str(jobs),
+            "status": "info" if jobs > 0 else "warn",
+            "reading": "Reportado" if jobs > 0 else "No indicado",
+            "relevance": "Fondo Emprender revisa generación de autoempleos, puestos de trabajo o empleos directos."
+        },
     ]
 
     max_bar = max(abs(sales), abs(expenses), abs(net_cash), abs(utility), 1)
@@ -559,50 +702,11 @@ def indicadores_sena():
 
 @app.route("/datos-ejemplo-sena")
 def datos_ejemplo_sena():
-    # Carga un ejemplo financiero y abre directamente los indicadores SENA.
-    session["business"] = {
-        "business_name": "Hamburguesas Latente",
-        "business_type": "Comidas rápidas",
-        "product_name": "Hamburguesa clásica",
-        "city": "Envigado",
-        "units_per_month": 180,
-        "current_price": 18000,
-        "desired_margin": 0.30,
-    }
-    session["mp"] = [
-        {"name": "Pan", "purchase_cost": 18000, "purchase_qty": 24, "used_qty": 1, "notes": ""},
-        {"name": "Carne", "purchase_cost": 50000, "purchase_qty": 1000, "used_qty": 150, "notes": ""},
-        {"name": "Queso", "purchase_cost": 22000, "purchase_qty": 20, "used_qty": 1, "notes": ""},
-        {"name": "Vegetales y salsas", "purchase_cost": 30000, "purchase_qty": 30, "used_qty": 1, "notes": ""},
-    ]
-    session["labor"] = [
-        {"role": "Cocinero", "monthly_pay": 1300000, "monthly_hours": 160, "minutes_per_unit": 8, "notes": ""},
-        {"role": "Auxiliar", "monthly_pay": 800000, "monthly_hours": 120, "minutes_per_unit": 4, "notes": ""},
-    ]
-    session["indirect"] = [
-        {"concept": "Arriendo", "monthly_value": 900000, "assigned_pct": 1, "notes": ""},
-        {"concept": "Servicios públicos", "monthly_value": 300000, "assigned_pct": 1, "notes": ""},
-        {"concept": "Internet y software", "monthly_value": 120000, "assigned_pct": 0.5, "notes": ""},
-    ]
-    session["operational"] = [
-        {"concept": "Empaque", "fixed_unit_cost": 1200, "sale_pct": 0, "notes": ""},
-        {"concept": "Servilletas", "fixed_unit_cost": 300, "sale_pct": 0, "notes": ""},
-        {"concept": "Comisión pasarela", "fixed_unit_cost": 0, "sale_pct": 0.03, "notes": ""},
-    ]
-    session["cash_flow"] = {
-        "initial_cash": 1500000,
-        "sales_income": 3240000,
-        "other_income": 0,
-        "raw_material_purchase": 1737000,
-        "payroll": 980000,
-        "fixed_expenses": 1260000,
-        "operative_expenses": 367200,
-        "debt_payments": 0,
-        "taxes": 150000,
-        "investments": 100000,
-    }
-    session["financing"] = {"loan_amount": 4000000, "annual_rate": 0.25, "term_months": 24}
-    session.modified = True
+    # Reutiliza el mismo ejemplo oficial de la app para que Dashboard e Indicadores SENA conversen.
+    try:
+        cargar_ejemplo()
+    except Exception:
+        pass
     return redirect("/indicadores-sena")
 
 
