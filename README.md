@@ -203,3 +203,21 @@ latente_finanzas_web/
   este MVP se enfoca en un producto principal para simplificar el celular).
 - Exportar el Dashboard como PDF generado en el servidor (hoy se usa la
   impresión nativa del navegador, que ya permite "Guardar como PDF").
+
+
+## Indicadores SENA / Fondo Emprender
+
+La app incluye una sección `/indicadores-sena` para organizar indicadores financieros orientativos útiles para la preparación de planes de negocio:
+
+- Ventas mensuales proyectadas.
+- Costos y gastos.
+- Utilidad mensual estimada.
+- Margen actual.
+- Flujo de caja.
+- Saldo final de caja.
+- Punto de equilibrio.
+- Inversión o crédito solicitado.
+- Cobertura de cuota.
+- Roles o empleos directos registrados.
+
+Esta sección no reemplaza los formatos oficiales del SENA, pero ayuda al emprendedor a preparar información financiera clave.

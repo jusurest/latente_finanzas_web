@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Indicadores SENA · LATENTE Finanzas</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/sena_indicadores.css') }}">
+</head>
+<body style="margin:0;background:#f5f7fb;">
+  <main class="sena-page">
+    <section class="sena-hero">
+      <span class="sena-eyebrow">Preparación para convocatorias · SENA / Fondo Emprender</span>
+      <h1>Indicadores para fortalecer tu plan de negocio</h1>
+      <p>Esta sección organiza información financiera útil para estructurar un plan de negocio: ventas, costos, gastos, flujo de caja, inversión, capacidad de pago e indicadores básicos. No reemplaza los formatos oficiales del SENA, pero ayuda a preparar datos clave para convocatorias de emprendimiento.</p>
+      <div class="sena-actions">
+        <a class="sena-btn dark" href="/dashboard">Volver al Dashboard</a>
+        <a class="sena-btn primary" href="/diagnostico">Actualizar datos</a>
+        <a class="sena-btn ghost" href="/datos-ejemplo-sena">Cargar ejemplo</a>
+        <button class="sena-btn ghost" onclick="window.print()">Imprimir / guardar PDF</button>
+      </div>
+    </section>
+    <section class="sena-kpis">
+      <article class="sena-card {{ summary.utility_class }}"><span>Utilidad mensual estimada</span><strong>{{ summary.utility }}</strong></article>
+      <article class="sena-card {{ summary.cash_class }}"><span>Flujo de caja neto</span><strong>{{ summary.cash_flow }}</strong></article>
+      <article class="sena-card {{ summary.margin_class }}"><span>Margen actual</span><strong>{{ summary.margin }}</strong></article>
+      <article class="sena-card {{ summary.coverage_class }}"><span>Cobertura de cuota</span><strong>{{ summary.coverage }}</strong></article>
+    </section>
+    <section class="sena-grid">
+      <article class="sena-table-card">
+        <h2>Visual rápido</h2>
+        <div class="sena-bars">
+          {% for bar in bars %}
+          <div class="sena-bar-row">
+            <strong><span>{{ bar.label }}</span><span>{{ bar.value }}</span></strong>
+            <div class="sena-track"><div class="sena-fill {{ bar.kind }}" style="width: {{ bar.width }}%;"></div></div>
+          </div>
+          {% endfor %}
+        </div>
+      </article>
+      <article class="sena-table-card">
+        <h2>¿Qué ayuda a preparar?</h2>
+        <div class="sena-checklist">
+          <div>Proyección de ventas</div><div>Costos y gastos</div><div>Análisis financiero</div><div>Indicadores del negocio</div><div>Valor del proyecto</div><div>Capacidad de pago</div>
+        </div>
+      </article>
+    </section>
+    <section class="sena-table-card">
+      <h2>Tabla de indicadores orientativos</h2>
+      <table class="sena-table">
+        <thead><tr><th>Indicador</th><th>Resultado</th><th>Lectura</th><th>Relevancia para Fondo Emprender</th></tr></thead>
+        <tbody>
+          {% for item in indicators %}
+          <tr><td><strong>{{ item.name }}</strong></td><td>{{ item.value }}</td><td><span class="sena-pill {{ item.status }}">{{ item.reading }}</span></td><td>{{ item.relevance }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="sena-note">
+      <h2>Si ves valores en cero</h2>
+      <p>
+        Los indicadores se calculan con los datos registrados en la herramienta. Si entraste directamente sin diligenciar el diagnóstico,
+        sin cargar un ejemplo o después de reiniciar la sesión, los valores aparecerán en cero. Usa “Actualizar datos” o “Cargar ejemplo”.
+      </p>
+    </section>
+
+    <section class="sena-note">
+      <h2>Texto sugerido para el cierre de la app</h2>
+      <p>Los resultados de LATENTE Finanzas permiten organizar información básica sobre ventas, costos, gastos, flujo de caja, inversión, financiamiento e indicadores del negocio. Esta información puede servir como punto de partida para estructurar planes de negocio y fortalecer la preparación financiera del emprendedor frente a convocatorias como Fondo Emprender del SENA. La postulación final dependerá de los requisitos, formatos y términos vigentes de cada convocatoria.</p>
+    </section>
+  </main>
+</body>
+</html>

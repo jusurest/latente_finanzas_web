@@ -25,6 +25,7 @@
         <a href="{{ url_for('flujo_caja') }}" class="{{ 'activo' if request.endpoint == 'flujo_caja' }}">Flujo de caja</a>
         <a href="{{ url_for('financiamiento') }}" class="{{ 'activo' if request.endpoint == 'financiamiento' }}">Financiamiento</a>
         <a href="{{ url_for('dashboard') }}" class="{{ 'activo' if request.endpoint == 'dashboard' }}">Dashboard</a>
+            <a class="{{ 'active' if active_path == '/indicadores-sena' else '' }}" href="/indicadores-sena">Indicadores SENA</a>
       </nav>
 
       {% block paso_indicador %}{% endblock %}
